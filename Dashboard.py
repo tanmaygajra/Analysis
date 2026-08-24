@@ -8,12 +8,19 @@ st.set_page_config(
     layout="wide"
 )
 
-# Load Excel file from GitHub repository
+# Excel file
 file_path = os.path.join(
     os.path.dirname(__file__),
-    "HEART_ANALYSIS (1).xlsx"
+    "HEART_ANALYSIS.xlsx"
 )
 
+# Check file exists
+if not os.path.exists(file_path):
+    st.error("❌ HEART_ANALYSIS.xlsx was not found.")
+    st.write("Make sure HEART_ANALYSIS.xlsx is uploaded to the same GitHub repository as Dashboard.py.")
+    st.stop()
+
+# Read Excel
 df = pd.read_excel(file_path, sheet_name="Sheet1")
 
 # Title
@@ -23,54 +30,39 @@ st.write("User Experience Analysis for an E-Learning Application")
 # Sidebar
 st.sidebar.header("🔎 Filters")
 
-if "Time difference Category" in df.columns:
+categories = df["Time difference Category"].dropna().unique()
 
-    categories = df["Time difference Category"].dropna().unique()
+selected = st.sidebar.multiselect(
+    "Time-to-Value Category",
+    categories,
+    default=list(categories)
+)
 
-    selected = st.sidebar.multiselect(
-        "Time-to-Value Category",
-        categories,
-        default=categories
-    )
-
-    data = df[df["Time difference Category"].isin(selected)]
-
-else:
-    data = df
+data = df[df["Time difference Category"].isin(selected)]
 
 # HEART Metrics
 st.subheader("📊 HEART Metrics")
 
 c1, c2, c3, c4, c5 = st.columns(5)
 
-c1.metric(
-    "😊 Happiness",
-    f"{data['CSAT_Response'].mean():.2f}/5"
-)
+c1.metric("😊 Happiness",
+          f"{data['CSAT_Response'].mean():.2f}/5")
 
-c2.metric(
-    "📈 Engagement",
-    f"{data['Sessions'].mean():.1f}"
-)
+c2.metric("📈 Engagement",
+          f"{data['Sessions'].mean():.1f}")
 
-c3.metric(
-    "🚀 Adoption",
-    f"{data['Core_Action'].mean() * 100:.1f}%"
-)
+c3.metric("🚀 Adoption",
+          f"{data['Core_Action'].mean()*100:.1f}%")
 
-c4.metric(
-    "🔄 Retention",
-    f"{data['Day7_Return'].mean() * 100:.1f}%"
-)
+c4.metric("🔄 Retention",
+          f"{data['Day7_Return'].mean()*100:.1f}%")
 
-c5.metric(
-    "✅ Task Success",
-    f"{data['Task_Completed'].mean() * 100:.1f}%"
-)
+c5.metric("✅ Task Success",
+          f"{data['Task_Completed'].mean()*100:.1f}%")
 
 st.divider()
 
-# Happiness and Engagement
+# Happiness & Engagement
 col1, col2 = st.columns(2)
 
 with col1:
@@ -85,30 +77,36 @@ with col2:
         data["Sessions"].value_counts().sort_index()
     )
 
-# Adoption and Retention
+# Adoption & Retention
 col3, col4 = st.columns(2)
 
 with col3:
     st.subheader("🚀 Adoption")
 
-    adoption = pd.DataFrame({
-        "Users": [
-            data["Core_Action"].sum(),
-            len(data) - data["Core_Action"].sum()
-        ]
-    }, index=["Adopted", "Not Adopted"])
+    adoption = pd.DataFrame(
+        {
+            "Users": [
+                data["Core_Action"].sum(),
+                len(data) - data["Core_Action"].sum()
+            ]
+        },
+        index=["Adopted", "Not Adopted"]
+    )
 
     st.bar_chart(adoption)
 
 with col4:
     st.subheader("🔄 Retention")
 
-    retention = pd.DataFrame({
-        "Users": [
-            data["Day7_Return"].sum(),
-            len(data) - data["Day7_Return"].sum()
-        ]
-    }, index=["Returned", "Did Not Return"])
+    retention = pd.DataFrame(
+        {
+            "Users": [
+                data["Day7_Return"].sum(),
+                len(data) - data["Day7_Return"].sum()
+            ]
+        },
+        index=["Returned", "Did Not Return"]
+    )
 
     st.bar_chart(retention)
 
@@ -149,7 +147,7 @@ st.dataframe(
     use_container_width=True
 )
 
-# Complete Dataset
+# Full dataset
 st.divider()
 
 with st.expander("📋 View Complete Dataset"):
